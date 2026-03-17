@@ -1,0 +1,9 @@
+# NS2 Generated Extensions
+*.tr
+*.nam
+*.csv
+temp.txt
+
+# Keep directory structure
+!*/.gitkeep
+
