@@ -1,11 +1,11 @@
-# ===== SCENARIO 1 =====
+# ===== SCENARIO 5 =====
 
 set ns [new Simulator]
 
-set tracefile [open logs/s1.tr w]
+set tracefile [open logs/s5.tr w]
 $ns trace-all $tracefile
 
-set namfile [open visuals/s1.nam w]
+set namfile [open visuals/s5.nam w]
 $ns namtrace-all-wireless $namfile 800 800
 
 set chan [new Channel/WirelessChannel]
@@ -64,13 +64,14 @@ $cbr0 attach-agent $udp0
 $ns at 1.0 "$cbr0 start"
 $ns at 9.0 "$cbr0 stop"
 
+$ns at 3.0 "$n1 setdest 150 600 50"
 
 proc finish {} {
  global ns tracefile namfile
  $ns flush-trace
  close $tracefile
  close $namfile
- exec nam visuals/s1.nam &
+ exec nam visuals/s5.nam &
  exit 0
 }
 

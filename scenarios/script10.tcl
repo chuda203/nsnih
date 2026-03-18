@@ -1,11 +1,11 @@
-# ===== SCENARIO 1 =====
+# ===== SCENARIO 10 =====
 
 set ns [new Simulator]
 
-set tracefile [open logs/s1.tr w]
+set tracefile [open logs/s10.tr w]
 $ns trace-all $tracefile
 
-set namfile [open visuals/s1.nam w]
+set namfile [open visuals/s10.nam w]
 $ns namtrace-all-wireless $namfile 800 800
 
 set chan [new Channel/WirelessChannel]
@@ -58,8 +58,8 @@ set null0 [new Agent/Null]
 $ns attach-agent $n3 $null0
 $ns connect $udp0 $null0
 set cbr0 [new Application/Traffic/CBR]
-$cbr0 set packetSize_ 512
-$cbr0 set interval_ 0.05
+$cbr0 set packetSize_ 1500
+$cbr0 set interval_ 0.005
 $cbr0 attach-agent $udp0
 $ns at 1.0 "$cbr0 start"
 $ns at 9.0 "$cbr0 stop"
@@ -70,7 +70,7 @@ proc finish {} {
  $ns flush-trace
  close $tracefile
  close $namfile
- exec nam visuals/s1.nam &
+ exec nam visuals/s10.nam &
  exit 0
 }
 

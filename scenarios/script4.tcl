@@ -1,11 +1,11 @@
-# ===== SCENARIO 1 =====
+# ===== SCENARIO 4 =====
 
 set ns [new Simulator]
 
-set tracefile [open logs/s1.tr w]
+set tracefile [open logs/s4.tr w]
 $ns trace-all $tracefile
 
-set namfile [open visuals/s1.nam w]
+set namfile [open visuals/s4.nam w]
 $ns namtrace-all-wireless $namfile 800 800
 
 set chan [new Channel/WirelessChannel]
@@ -20,7 +20,7 @@ $ns node-config -adhocRouting AODV \
  -llType LL \
  -macType Mac/802_11 \
  -ifqType Queue/DropTail/PriQueue \
- -ifqLen 50 \
+ -ifqLen 200 \
  -antType Antenna/OmniAntenna \
  -propType Propagation/TwoRayGround \
  -phyType Phy/WirelessPhy \
@@ -58,8 +58,8 @@ set null0 [new Agent/Null]
 $ns attach-agent $n3 $null0
 $ns connect $udp0 $null0
 set cbr0 [new Application/Traffic/CBR]
-$cbr0 set packetSize_ 512
-$cbr0 set interval_ 0.05
+$cbr0 set packetSize_ 1024
+$cbr0 set interval_ 0.002
 $cbr0 attach-agent $udp0
 $ns at 1.0 "$cbr0 start"
 $ns at 9.0 "$cbr0 stop"
@@ -70,7 +70,7 @@ proc finish {} {
  $ns flush-trace
  close $tracefile
  close $namfile
- exec nam visuals/s1.nam &
+ exec nam visuals/s4.nam &
  exit 0
 }
 
