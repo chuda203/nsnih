@@ -189,3 +189,20 @@ $ns at 10.0 "finish"
 $ns run
 ```
 - `run` : Semua aturan deklarasi, persiapan properti dan peng-jadwalan tatanan diatas sudah di inisialisasi tuntas. Fungsi `run` ini bagaikan me-menyet menekan tombol "PLAY" pada sebuah kaset. Menyalakan simulasi untuk mulai berjalan nyata berdasarkan semua skenario *Events* yang sudah terjadwal rapi tadi.
+
+## 9. Alur Bagaimana Jaringannya Berjalan (*Flow* Simulasi)
+Secara keseluruhan, urutan atau tata cara kerja jaringan dari **Script 1** bisa diringkas menjadi alur berikut:
+1. **Mulai:** Aplikasi pencipta paket lalu lintas data (CBR) yang melekat pada stasiun sumber (Node `n0` - *SRC*) mulai memompa muatan data berukuran 512 bytes setiap jeda 0.05 detik dimulai tepat pada detik simulasi ke-1.0. 
+2. **Pengemasan (Transport UDP):** Muatan data CBR tersebut diserahkan ke agen UDP pada perangkat Node `n0`. UDP bertugas membungkus data menjadi paket-paket ringkas tanpa ada pengecekan garansi ketibaan pengiriman.
+3. **Pencarian Jalan Estafet (Routing AODV):** Sebelum ditembakkan ke udara, protokol *routing* AODV "berpikir" mencari rute terbaik dari ujung `n0` menuju target `n3`. Dikarenakan jarak ujung ke ujungnya sepanjang 300 meter dimana itu melampaui kemampuan pancar optimal antena (sekitar 250 meter), Node `n0` akan mencari bantuan menggunakan perangkat tetangganya (`n1` atau `n2`) untuk dijadikan *Router* pantulan estafet transmisi.
+4. **Perambatan Medium Udara:** Pancaran sinyal dilontarkan melalui media Topologi 2 Dimensi.
+5. **Melompat dan Meneruskan (*Hop Relaying*):** Paket data melompat dari `n0`, mendarat dan ditangkap oleh router estafet `n1`/`n2`, lalu dilempar diteruskan berantai menyambung udara sampai mendarat di pangkalan akhir `n3`.
+6. **Titik Penerimaan:** Di titik `n3`, agen penangkap `Null` menerima limpahan kedatangan paket-paket gelombang sebagai "lubang hitam", yakni disetor, diterima, tanpa dibalasi konfirmasi.
+7. **Akhir Simulasi:** Menginjak detik hitungan ke-9.0, keran pompa semprotan CBR dari pusat dimatikan. Memberi jeda 1 detik agar sisa antrean gelombang sisa merambat sampai di tujuan. Lalu di detik 10.0 tombol mati *finish* ditekan membungkus seluruh catatan rekam jejaknya ke memori.
+
+## 10. Contoh Penerapan dalam Kehidupan Nyata
+Skenario Script 1 ini pada hakikatnya sedang mensimulasikan topologi lingkungan komunikasi peranti nirkabel berjarak relatif dekat - menengah yang saling melempar paket pertukaran secara stabil, ringan, beralur konstan tanpa sumbatan jenuh. 
+
+**Contoh nyata aplikasinya di lapangan:**
+- **Sistem Radio Komunikasi Internal (Walkie-Talkie/HT) Konvoi:** Anggap Node itu adalah beberapa armada mobil Patroli Keamanan yang berbaris memanjang konvoi dan memakai Handy-Talkie radio. Staf kendaraan terdepan (*Source*) memberi pelaporan audio langsung (*streaming konstan CBR tanpa peduli hilang/UDP*) ke pimpinan di mobil barisan buncit (*Destination*). Karena mobilnya baris panjang menjauh, sinyal suara dari mobil terdepan direlai dan dipancarkan ulang estafet secara otomatis oleh radio HT di mobil-mobil tengah (*Router 1 & 2*). Karena jalurnya lapang dan obrolannya standar, lintasannya mulus tak ada hambatan kemacetan.
+- **Sensor Internet of Things (IoT) Barisan Pertanian:** Sederet pilar stasiun sensor alat pembaca suhu kelembapan cuaca mini yang diletakan menyebar tiap 100 meter memanjang di areal kebun pertanian (*Adhoc/Tanpa kabel*). Sensor pangkal mengirimkan *update* berkala data cuaca secara rutinan (konstan) yang memantul di tiang sensor lain agar laporannya bisa masuk tiba ke pangkalan pusat gubuk server ujung pengumpul. Jaringannya bersifat ringan, awet, dan laju paket teratur santai.
