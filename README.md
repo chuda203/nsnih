@@ -47,12 +47,26 @@ Agar tidak bingung, berikut adalah "peta" dari proyek ini:
 -   **`.csv` (Comma Separated Values):** Ringkasan hasil akhir yang bisa Anda buka di Excel atau Google Sheets.
 
 ## 🏁 Tujuan Akhir (Hasil)
-Setelah simulasi selesai, Anda akan mendapatkan file **`results/hasil.csv`**. Untuk proyek ini, kami fokus pada 3 angka penting:
--   **PDR (Packet Delivery Ratio):** Berapa persen data yang berhasil sampai? (Makin tinggi makin bagus).
--   **Throughput:** Seberapa cepat datanya mengalir? (Makin tinggi makin cepat).
--   **Overhead:** Seberapa "lelah" jaringan mengurus dirinya sendiri agar data bisa sampai? (Makin rendah makin efisien).
+Setelah simulasi selesai, Anda akan mendapatkan file **`results/hasil.csv`** (ringkas) dan **`results/hasil_detail.csv`** (detail perhitungan).
 
-> [!NOTE]
-> Ketiga parameter di atas dipilih karena merupakan standar dasar penelitian performa jaringan. Namun, dalam penelitian lain, Anda bisa menyesuaikan faktor atau angka penting lainnya (seperti *Delay*, *Jitter*, atau *Konsumsi Energi*) sesuai dengan kebutuhan riset yang lebih spesifik.
+### Ringkasan (hasil.csv)
+Berisi 4 metrik QoS:
+- **Delay (ms)**: rata-rata waktu tempuh paket end-to-end.
+- **Throughput (Kbps)**: laju bit yang berhasil diterima.
+- **PacketLoss (%)**: persentase paket yang hilang.
+- **Jitter (ms)**: variasi delay antar paket.
 
-Dengan proyek ini, kita bisa menyimpulkan skenario mana yang paling efisien untuk digunakan!
+### Detail per skenario (hasil_detail.csv)
+Selain 4 metrik di atas, file ini menambahkan kolom sumber perhitungannya per skenario:
+- `Sent`, `Received` (jumlah paket data)
+- `BytesReceived` (total byte yang diterima di tujuan)
+- `StartTime(s)`, `EndTime(s)`, `Duration(s)`
+- `TotalDelay(s)`, `TotalJitter(s)`
+
+Rumus yang dipakai:
+- `avg_delay_ms = (TotalDelay(s) / Received) * 1000`
+- `throughput_kbps = (BytesReceived * 8) / (Duration(s) * 1000)`
+- `packet_loss_pct = ((Sent - Received) / Sent) * 100`
+- `avg_jitter_ms = (TotalJitter(s) / Received) * 1000`
+
+Dengan dua file ini, Anda bisa melihat ringkasan cepat sekaligus “bukti” bagaimana nilai 4 faktor dihitung per skenario.
