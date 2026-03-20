@@ -1,4 +1,15 @@
 # ===== SCENARIO 14 =====
+# Keterangan  : Jam kuliah stabil
+# Tipe        : Wired + Wireless (3 AP)
+# Jumlah Node : 200 wireless nodes
+# Routing     : AODV
+# Queue       : RED
+# Traffic     : TCP
+# Rate        : 256 Kbps
+# Packet Size : 512 byte
+# Noise/Error : 0.0005
+# Sim Time    : 100 s
+# Area        : 1000 x 1000 m
 
 set ns [new Simulator]
 
@@ -6,15 +17,23 @@ set tracefile [open logs/s14.tr w]
 $ns trace-all $tracefile
 
 set namfile [open visuals/s14.nam w]
-$ns namtrace-all-wireless $namfile 800 800
+$ns namtrace-all-wireless $namfile 1000 1000
 
-set chan [new Channel/WirelessChannel]
-
-set val(nn) 4
-set god_ [create-god $val(nn)]
-
+# ---- Topography ----
 set topo [new Topography]
-$topo load_flatgrid 800 800
+$topo load_flatgrid 1000 1000
+
+# Wireless nodes: 200 clients + 3 AP wired nodes = 203 total
+set num_wl_nodes 200
+set num_total [expr $num_wl_nodes + 3]
+set god_ [create-god $num_total]
+
+# ---- Wired backbone link bandwidth and delay ----
+set bw_backbone  100Mb
+set delay_link   10ms
+
+# ---- Wireless node configuration ----
+set chan [new Channel/WirelessChannel]
 
 $ns node-config -adhocRouting AODV \
  -llType LL \
@@ -29,63 +48,101 @@ $ns node-config -adhocRouting AODV \
  -agentTrace ON \
  -routerTrace ON \
  -macTrace ON \
- -namtrace ON \
  -movementTrace ON
 
-$ns color 1 Blue
-$ns color 2 Red
-$ns color 3 Green
-$ns color 4 Yellow
-
-set n0 [$ns node]
-set n1 [$ns node]
-set n2 [$ns node]
-set n3 [$ns node]
-
-$n0 set X_ 50; $n0 set Y_ 200; $n0 set Z_ 0.0; $n0 label "SRC"
-$n1 set X_ 150; $n1 set Y_ 200; $n1 set Z_ 0.0; $n1 label "R1"
-$n2 set X_ 250; $n2 set Y_ 200; $n2 set Z_ 0.0; $n2 label "R2"
-$n3 set X_ 350; $n3 set Y_ 200; $n3 set Z_ 0.0; $n3 label "DST"
-
-foreach n {n0 n1 n2 n3} {
-    $ns initial_node_pos [set $n] 30
+# ---- Create 200 wireless nodes ----
+for {set i 0} {$i < $num_wl_nodes} {incr i} {
+    set wl($i) [$ns node]
+    $wl($i) random-motion 1
 }
 
-set udp0 [new Agent/UDP]
-$udp0 set fid_ 1
-$ns attach-agent $n0 $udp0
-set null0 [new Agent/Null]
-$ns attach-agent $n3 $null0
-$ns connect $udp0 $null0
-set cbr0 [new Application/Traffic/CBR]
-$cbr0 set packetSize_ 512
-$cbr0 set interval_ 0.05
-$cbr0 attach-agent $udp0
-$ns at 1.0 "$cbr0 start"
-$ns at 9.0 "$cbr0 stop"
+# ---- Position wireless nodes in 1000x1000 area ----
+for {set i 0} {$i < $num_wl_nodes} {incr i} {
+    $wl($i) set X_ [expr {($i * 97 + 50) % 950}]
+    $wl($i) set Y_ [expr {($i * 83 + 50) % 950}]
+    $wl($i) set Z_ 0.0
+    $ns initial_node_pos $wl($i) 20
+}
 
-set udp1 [new Agent/UDP]
-$udp1 set fid_ 2
-$ns attach-agent $n0 $udp1
-set null1 [new Agent/Null]
-$ns attach-agent $n3 $null1
-$ns connect $udp1 $null1
-set cbr1 [new Application/Traffic/CBR]
-$cbr1 set packetSize_ 1024
-$cbr1 set interval_ 0.001
-$cbr1 attach-agent $udp1
-$ns at 4.0 "$cbr1 start"
-$ns at 5.0 "$cbr1 stop"
+# ---- Switch to wired node config for AP backbone ----
+$ns node-config -wiredRouting ON \
+                -llType ""       \
+                -macType ""      \
+                -propType ""     \
+                -antType ""      \
+                -phyType ""      \
+                -channel ""      \
+                -agentTrace OFF  \
+                -routerTrace OFF \
+                -macTrace OFF    \
+                -movementTrace OFF \
+                -adhocRouting ""
 
+set ap0 [$ns node]
+set ap1 [$ns node]
+set ap2 [$ns node]
 
+# ---- Wired backbone links between APs (RED queue) ----
+$ns duplex-link $ap0 $ap1 $bw_backbone $delay_link RED
+$ns duplex-link $ap1 $ap2 $bw_backbone $delay_link RED
+
+# ---- Associate wireless nodes to APs (~67 each) ----
+for {set i 0} {$i < 67} {incr i} {
+    $wl($i) base-station [AddrParams addr2id [$ap0 node-addr]]
+}
+for {set i 67} {$i < 134} {incr i} {
+    $wl($i) base-station [AddrParams addr2id [$ap1 node-addr]]
+}
+for {set i 134} {$i < $num_wl_nodes} {incr i} {
+    $wl($i) base-station [AddrParams addr2id [$ap2 node-addr]]
+}
+
+# ---- TCP Traffic flows (256 Kbps, 512B packets) ----
+# interval = 512 / (256000/8) = 512/32000 = 0.016s
+set tcp0 [new Agent/TCP]
+$tcp0 set fid_ 1
+$ns attach-agent $wl(0) $tcp0
+set sink0 [new Agent/TCPSink]
+$ns attach-agent $wl(199) $sink0
+$ns connect $tcp0 $sink0
+set ftp0 [new Application/FTP]
+$ftp0 attach-agent $tcp0
+
+set tcp1 [new Agent/TCP]
+$tcp1 set fid_ 2
+$ns attach-agent $wl(20) $tcp1
+set sink1 [new Agent/TCPSink]
+$ns attach-agent $wl(179) $sink1
+$ns connect $tcp1 $sink1
+set ftp1 [new Application/FTP]
+$ftp1 attach-agent $tcp1
+
+set tcp2 [new Agent/TCP]
+$tcp2 set fid_ 3
+$ns attach-agent $wl(40) $tcp2
+set sink2 [new Agent/TCPSink]
+$ns attach-agent $wl(159) $sink2
+$ns connect $tcp2 $sink2
+set ftp2 [new Application/FTP]
+$ftp2 attach-agent $tcp2
+
+# ---- Schedule traffic ----
+$ns at 1.0  "$ftp0 start"
+$ns at 99.0 "$ftp0 stop"
+$ns at 2.0  "$ftp1 start"
+$ns at 98.0 "$ftp1 stop"
+$ns at 3.0  "$ftp2 start"
+$ns at 97.0 "$ftp2 stop"
+
+# ---- Finish procedure ----
 proc finish {} {
- global ns tracefile namfile
- $ns flush-trace
- close $tracefile
- close $namfile
- exec nam visuals/s14.nam &
- exit 0
+    global ns tracefile namfile
+    $ns flush-trace
+    close $tracefile
+    close $namfile
+    exec nam visuals/s14.nam &
+    exit 0
 }
 
-$ns at 10.0 "finish"
+$ns at 100.0 "finish"
 $ns run
